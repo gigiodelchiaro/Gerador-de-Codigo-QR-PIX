@@ -13,7 +13,7 @@ class PixQrCode:
         """
     Definiçao da classe para implementaçao e geraçao do QRCode
         :param name: Nome do destinatario
-        :param key: Telefone celular do destinatario
+        :param key: chave pix do destinatario
         :param city: Cidade do remetente
         :param amount: Valor da transaçao
         :param reference_label: Codigo da transaçao

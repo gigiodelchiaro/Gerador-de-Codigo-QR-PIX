@@ -49,7 +49,7 @@ class ValidatePix:
 
     def key(self):
         if not self.pix.key:
-            raise PixError("telefone nao informado")
+            raise PixError("chave nao informado")
 
         self.pix.key = FormatValues.key(self.pix.key)
         if not re.match(r'^.55[\d]{3}', self.pix.key):
@@ -57,10 +57,4 @@ class ValidatePix:
                 self.pix.key = f"{self.pix.key}"
             else:
                 self.pix.key = f"+{self.pix.key}"
-
-        if 14 > len(self.pix.key) < 14:
-            raise PixError("telefone curto ou longo")
-
-        if not re.match(r'^.[\d]{3}', self.pix.key):
-            raise PixError("telefone sem o DDD")
         return True
