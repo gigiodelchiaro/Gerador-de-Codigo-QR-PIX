@@ -13,8 +13,8 @@ class FormatValues:
         # return ('{:.2f}'.format(value_base / 100)).replace('.', ',')
 
     @staticmethod
-    def mobile(mobile: str):
-        return re.sub(r'[^0-9]', '', mobile).upper()
+    def key(key: str):
+        return re.sub(r'[^0-9]', '', key).upper()
 
     @staticmethod
     def texts_no_space(text: str):

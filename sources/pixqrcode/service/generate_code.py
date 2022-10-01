@@ -11,7 +11,7 @@ class GenerateCode:
         return str(len(text)).zfill(2)
 
     def generate(self, pix: Pix):
-        return f"00020126360014{self.merchant.globally_unique_identifier}0114{pix.mobile}520400005303986540" \
+        return f"00020126360014{self.merchant.globally_unique_identifier}0114{pix.key}520400005303986540" \
         f"{len(pix.amount.__str__())}{pix.amount.__str__()}5802{pix.country_code}59{self.left_zero(pix.name)}" \
             f"{pix.name}60{self.left_zero(pix.city)}{pix.city}" \
             f"62{str(len(pix.reference_label) + 4).zfill(2)}05{self.left_zero(pix.reference_label)}" \

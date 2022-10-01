@@ -37,9 +37,10 @@ def open() :
 
 
     # Faz o QR Code
-    cor = "#193984"
+    cor = "black"
     fundo = "white"
-    imagem = "sources/logo-dryclean.png"
+    imagem = ""
+    nome = "Antonio"
     reais = resp_reais.get()
     centavos = resp_centavos.get()
     
@@ -47,14 +48,14 @@ def open() :
         reais = "0"
     if centavos == "":
         centavos = "00"
-    chave = "05622974000120"
+    chave = "06524647858"
     regiao = "SAO PAULO"
 
     # Faz o código PIX
     from pixqrcode import PixQrCode
     identificador = resp_identificador.get()
-    pix = PixQrCode("Nome", chave, regiao, reais + centavos,identificador)
-    save = reais + "_codigo_" + identificador
+    pix = PixQrCode(nome, chave, regiao,f"{reais}{centavos}",identificador)
+    save = f"{reais}_codigo_{identificador}"
     codigo = pix.generate_code()
 
     # Tranforma em QR
@@ -79,9 +80,9 @@ def open() :
               (img.size[1] - logo.size[1]) // 2)
 
        img.paste(logo, pos)
-       img.save("qrcodes/" + save + ".png")
+       img.save(f"qrcodes/{save}.png")
     else:
-        img.save("qrcodes/" + save + ".png")
+        img.save(f"qrcodes/" + save + ".png")
 
     # Abre o QR Code
   

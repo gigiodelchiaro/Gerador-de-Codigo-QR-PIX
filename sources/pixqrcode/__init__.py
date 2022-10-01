@@ -9,16 +9,16 @@ from pixqrcode.service import GenerateCode, ValidatePix
 
 
 class PixQrCode:
-    def __init__(self, name: str, mobile: str, city: str, amount: str = None, reference_label: str = None):
+    def __init__(self, name: str, key: str, city: str, amount: str = None, reference_label: str = None):
         """
     Definiçao da classe para implementaçao e geraçao do QRCode
         :param name: Nome do destinatario
-        :param mobile: Telefone celular do destinatario
+        :param key: Telefone celular do destinatario
         :param city: Cidade do remetente
         :param amount: Valor da transaçao
         :param reference_label: Codigo da transaçao
         """
-        self.pix = Pix(name, mobile, city, amount, reference_label)
+        self.pix = Pix(name, key, city, amount, reference_label)
 
     def is_valid(self) -> bool:
         """
