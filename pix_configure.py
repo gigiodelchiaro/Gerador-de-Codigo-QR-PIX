@@ -1,8 +1,5 @@
-from PIL import ImageTk
 from tkinter import *
-from pixqrcode import PixQrCode
-import qrcode
-import pyperclip
+
 root = Tk()
 
 root.title("Gerador de Código QR Pix")
@@ -37,6 +34,7 @@ def open() :
     regiao = resp_regiao.get()
     reais = resp_reais.get()
     centavos = resp_centavos.get()
+
     if reais == "":
         reais = "0"
     if centavos == "":
@@ -49,34 +47,71 @@ def open() :
         regiao = "SAO PAULO"
 
     identificador = resp_identificador.get()
-    pix = PixQrCode(str(nome), str(chave), str(regiao), reais + centavos, str(identificador))
-    save = reais + "_codigo_" + identificador
+    from pixqrcode import PixQrCode
+    pix = PixQrCode(nome, chave, regiao, f"{reais}{centavos}", identificador)
+    save = f"{reais}_codigo_{identificador}"
     pix.save_qrcode("qrcodes",save)
     codigo = pix.generate_code()
+
+    # Tranforma em QR
+    import qrcode
+    qr = qrcode.QRCode()
+    qr.add_data(codigo)
+    qr.make()
+    cor = "black"
+    background = "white"
+    imagem = ""
+    img = qr.make_image(fill_color=cor, back_color=background).convert('RGB')
+
+    if imagem != "" :
+       from PIL import Image
+       logo = Image.open(imagem)
+       basewidth = 100
+
+       # Coloca a imagem
+
+       wpercent = (basewidth/float(logo.size[0]))
+       hsize = int((float(logo.size[1])*float(wpercent)))
+       logo = logo.resize((basewidth, hsize), Image.Resampling.LANCZOS)
+
+       pos = ((img.size[0] - logo.size[0]) // 2,
+              (img.size[1] - logo.size[1]) // 2)
+
+       img.paste(logo, pos)
+       img.save(f"qrcodes/{save}.png")
+    else:
+        img.save(f"qrcodes/{save}.png")
+
 
     # Abre o QR Code
   
     top = Toplevel()
     top.title("Escaneie para pagar")
-    bv = Label(top, text="Código QR:").pack()
     top.iconbitmap("sources/icon.ico")
-    qrcode = ImageTk.PhotoImage(file="qrcodes/" + save + ".png")
-    qrlabel = Label(top, image=qrcode).pack()
+    bv = Label(top, text="Código QR:").pack()
+    pdser = Label(top, text="Pode Ser PIX?").pack()
+    bv = Label(top, text="Abra o aplicativo do seu banco e escaneie:").pack()
+    ivalor = Label(top, text=f"Valor: {reais},{centavos}")
+    ivalor.pack()
+
+    from PIL import ImageTk
+    qrimg = ImageTk.PhotoImage(file=f"qrcodes/{save}.png")
+    qrlabel = Label(top, image=qrimg).pack()
 
     # Informações sobre o código
 
     info = Label(top, text="Informações:")
-    inome = Label(top, text="Nome: " + nome)
-    ichave = Label(top, text="Chave: " + chave)
-    iregiao = Label(top, text="Região: " + regiao)
-    ivalor = Label(top, text="Valor:" + reais + "," + centavos)
-    iidentificador = Label(top, text="Identificador: " + identificador)
+    inome = Label(top, text=f"Nome: {nome}")
+    ichave = Label(top, text=f"Chave: {chave}")
+    iregiao = Label(top, text=f"Região: {regiao}")
+    iidentificador = Label(top, text=f"Identificador: {identificador}")
 
     icopy = Text(top, width=20 ,height=1)
     icopy.insert(INSERT, codigo)
     icopy.configure(state=DISABLED)
 
     def copy_select():
+        import pyperclip
         pyperclip.copy(codigo)
 
     button_copy = Button(top,text="Copiar",command=lambda:copy_select())
@@ -85,7 +120,6 @@ def open() :
     inome.pack()
     ichave.pack()
     iregiao.pack()
-    ivalor.pack()
     iidentificador.pack()
     icopy.pack()
     button_copy.pack()

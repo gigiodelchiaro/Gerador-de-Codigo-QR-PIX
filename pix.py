@@ -40,20 +40,20 @@ def open() :
     cor = "black"
     fundo = "white"
     imagem = ""
-    nome = "Antonio"
+    nome = "Del Chiaro"
+    chave = "06524647858"
+    regiao = "SAO PAULO"
     reais = resp_reais.get()
     centavos = resp_centavos.get()
-    
+    identificador = resp_identificador.get()
     if reais == "":
         reais = "0"
     if centavos == "":
         centavos = "00"
-    chave = "06524647858"
-    regiao = "SAO PAULO"
 
     # Faz o código PIX
     from pixqrcode import PixQrCode
-    identificador = resp_identificador.get()
+
     pix = PixQrCode(nome, chave, regiao,f"{reais}{centavos}",identificador)
     save = f"{reais}_codigo_{identificador}"
     codigo = pix.generate_code()
@@ -82,29 +82,30 @@ def open() :
        img.paste(logo, pos)
        img.save(f"qrcodes/{save}.png")
     else:
-        img.save(f"qrcodes/" + save + ".png")
+        img.save(f"qrcodes/{save}.png")
 
     # Abre o QR Code
   
     top = Toplevel()
     top.title("Escaneie para pagar")
+    top.iconbitmap("sources/icon.ico")
     pdser = Label(top, text="Pode Ser PIX?", font=80).pack()
     bv = Label(top, text="Abra o aplicativo do seu banco e escaneie:", font=25).pack()
-    top.iconbitmap("sources/icon.ico")
-    ivalor = Label(top, text="Valor: " + reais + "," + centavos, font=50)
+    ivalor = Label(top, text=f"Valor: {reais},{centavos}", font=50)
     ivalor.pack()
 
     from PIL import ImageTk
 
-    qrcode = ImageTk.PhotoImage(file="qrcodes/" + save + ".png")
-    qrlabel = Label(top, image=qrcode).pack()
+    qrimg = ImageTk.PhotoImage(file=f"qrcodes/{save}.png")
+    qrlabel = Label(top, image=qrimg).pack()
 
     # Informações sobre o código
 
     info = Label(top, text="Informações:")
-    ichave = Label(top, text="Chave: " + chave)
-    iregiao = Label(top, text="Região: " + regiao)
-    iidentificador = Label(top, text="Identificador: " + identificador)
+    inome = Label(top, text=f"Nome: {nome}")
+    ichave = Label(top, text=f"Chave: {chave}")
+    iregiao = Label(top, text=f"Região: {regiao}")
+    iidentificador = Label(top, text=f"Identificador: {identificador}")
 
     icopy = Text(top, width=20 ,height=1)
     icopy.insert(INSERT, codigo)
@@ -117,9 +118,9 @@ def open() :
     button_copy = Button(top,text="Copiar",command=lambda:copy_select())
 
     info.pack()
+    inome.pack()
     ichave.pack()
     iregiao.pack()
- 
     iidentificador.pack()
     icopy.pack()
     button_copy.pack()
