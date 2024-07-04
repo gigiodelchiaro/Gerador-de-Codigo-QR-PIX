@@ -1,0 +1,8 @@
+#qrcode {
+    width: 0;
+    height: 0;
+}
+#qrimage {
+    width: 800px;
+    height: 800px;
+}
