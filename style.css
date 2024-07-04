@@ -58,6 +58,15 @@ button:hover {
     max-width: 100%;
     max-height: 100%;
 }
-.simple input{
+.simple *{
     display: none;
+}
+.simple {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #00000000;
+}
+.simple img {
+    display: flex;
 }
