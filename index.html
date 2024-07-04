@@ -3,85 +3,149 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Document</title>
-	<script type="text/javascript" src="generate-qr/jquery.min.js"></script>
-	<script type="text/javascript" src="generate-qr/qrcode.js"></script>
+	<title>Gerador QR Code PIX</title>
+	<script type="text/javascript" src="dependencies/jquery.min.js"></script>
+	<script type="text/javascript" src="dependencies/jquery.inputmask.min.js"></script>
+	<script type="text/javascript" src="dependencies/qrcode.js"></script>
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<input id="key" type="text" placeholder="Chave PIX">
-<input id="amount" type="text" placeholder="Valor">
-<input id="name" type="text" placeholder="Nome Beneficiário">
-<input id="city" type="text" value="Sao Paulo" placeholder="Cidade">
-<input id="identifier" type="text" value="***" placeholder="Identificador">
-<button onclick="generateQRCode()">Generate PIX</button>
-<div id="qrcode"></div>
-<img id="qrimage">
-<script type="text/javascript">
-function padLength(length) {
-	return length.toString().padStart(2, '0');
-}
+	<select id="key-type" onchange="applyKeyMask()">
+		<option value="cpf">CPF</option>
+		<option value="cnpj">CNPJ</option>
+		<option value="celular">Celular</option>
+		<option value="email">Email</option>
+		<option value="aleatoria">Chave Aleatória</option>
+	</select>
+	<input id="key" type="text" placeholder="Chave PIX">
+	<input id="amount" type="text" placeholder="Valor">
+	<input id="name" type="text" placeholder="Nome Beneficiário">
+	<input id="city" type="text" placeholder="Cidade">
+	<input id="identifier" type="text" placeholder="Identificador">
+	<button onclick="generateQRCode()">Generate PIX</button>
+	<div id="qrcode"></div>
+	<div id="qr-container">
+		<img id="qrimage">
+	</div>
+	<script type="text/javascript">
+		function applyKeyMask() {
+			const keyInput = $("#key");
+			const keyType = $("#key-type").val();
 
-function generateQRData() {
-	const key = document.getElementById("key").value;
-	const amount = document.getElementById("amount").value;
-	const name = document.getElementById("name").value;
-	const city = document.getElementById("city").value;
-	const identifier = document.getElementById("identifier").value;
+			keyInput.inputmask('remove'); // Remove any existing mask
 
-	var amountString = "";
-	if (amount != "") {
-		amountString = "54" + padLength(amount.length) + amount;
-	}
-	let qrdata = "00020126" + padLength(key.length + 22) + "0014BR.GOV.BCB.PIX01" + padLength(key.length) + key + "520400005303986" + amountString + "5802BR59" + padLength(name.length) + name + "60" + padLength(city.length) + city + "62" + padLength(identifier.length + 4) + "05" + padLength(identifier.length) + identifier + "6304";
-	qrdata += crc16Ccitt(qrdata);
-
-	return qrdata;
-}
-
-function crc16Ccitt(data) {
-	const polynomial = 0x1021;
-	let crc = 0xFFFF;
-
-	for (let i = 0; i < data.length; i++) {
-		crc ^= data.charCodeAt(i) << 8;
-		for (let j = 0; j < 8; j++) {
-			if ((crc & 0x8000) !== 0) {
-				crc = (crc << 1) ^ polynomial;
-			} else {
-				crc <<= 1;
+			switch (keyType) {
+				case "cpf":
+					keyInput.inputmask("999.999.999-99");
+					break;
+				case "cnpj":
+					keyInput.inputmask("99.999.999/9999-99");
+					break;
+				case "celular":
+					keyInput.inputmask("(99) 99999-9999");
+					break;
+				case "email":
+				case "aleatoria":
+					keyInput.inputmask("Regex", { regex: ".*" }); // Allow any text input
+					break;
 			}
-			crc &= 0xFFFF;
 		}
-	}
 
-	return crc.toString(16).toUpperCase().padStart(4, '0');
-}
+		function padLength(length) {
+			return length.toString().padStart(2, '0');
+		}
 
-function generateQRCode() {
-	const qrdata = generateQRData();
-	console.log(qrdata);
+		function sanitizeText(text) {
+			const accentsMap = new Map([
+				["á", "a"], ["ã", "a"], ["â", "a"], ["à", "a"], ["ä", "a"],
+				["é", "e"], ["ê", "e"], ["è", "e"], ["ë", "e"],
+				["í", "i"], ["î", "i"], ["ì", "i"], ["ï", "i"],
+				["ó", "o"], ["õ", "o"], ["ô", "o"], ["ò", "o"], ["ö", "o"],
+				["ú", "u"], ["û", "u"], ["ù", "u"], ["ü", "u"],
+				["ç", "c"], ["ñ", "n"]
+			]);
 
-	new QRCode(document.getElementById("qrcode"), {
-		text: qrdata,
-		colorDark: "#000000",
-		colorLight: "#ffffff",
-		correctLevel: QRCode.CorrectLevel.H,
-		useSVG: true
-	});
+			return text.split('').map(char => accentsMap.get(char) || char).join('');
+		}
 
-	// Wait a bit for the QRCode library to generate the SVG
-	setTimeout(() => {
-		const svgElement = document.querySelector("#qrcode svg");
-		const serializer = new XMLSerializer();
-		const svgString = serializer.serializeToString(svgElement);
-		const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
-		const url = URL.createObjectURL(svgBlob);
+		function generateQRData() {
+			const keyType = document.getElementById("key-type").value;
+			let key = document.getElementById("key").value;
+			const amount = document.getElementById("amount").value;
+			const name = sanitizeText(document.getElementById("name").value);
+			const city = sanitizeText(document.getElementById("city").value);
+			var identifier = sanitizeText(document.getElementById("identifier").value);
+			
+			if (keyType === "celular") {
+				key = "+55" + key.replace(/\D/g, ''); // Add +55 and remove non-digit characters
+			}
+			else if (keyType === "cpf" || keyType === "cnpj")
+			{
+				key = key.replace(/\D/g, '');
+			}
+			if (identifier === "") {
+				identifier = "***";
+			}
+			let amountString = "";
+			if (amount != "") {
+				const normalizedAmount = parseFloat(amount).toFixed(2);
+				amountString = "54" + padLength(normalizedAmount.length) + normalizedAmount;
+			}
 
-		const imgElement = document.getElementById("qrimage");
-		imgElement.src = url;
-	}, 100); // Adjust the delay if necessary
-}
-</script>
+			let qrdata = "00020126" + padLength(key.length + 22) + "0014BR.GOV.BCB.PIX01" + padLength(key.length) + key + "520400005303986" + amountString + "5802BR59" + padLength(name.length) + name + "60" + padLength(city.length) + city + "62" + padLength(identifier.length + 4) + "05" + padLength(identifier.length) + identifier + "6304";
+			qrdata += crc16Ccitt(qrdata);
+
+			return qrdata;
+		}
+
+		function crc16Ccitt(data) {
+			const polynomial = 0x1021;
+			let crc = 0xFFFF;
+
+			for (let i = 0; i < data.length; i++) {
+				crc ^= data.charCodeAt(i) << 8;
+				for (let j = 0; j < 8; j++) {
+					if ((crc & 0x8000) !== 0) {
+						crc = (crc << 1) ^ polynomial;
+					} else {
+						crc <<= 1;
+					}
+					crc &= 0xFFFF;
+				}
+			}
+
+			return crc.toString(16).toUpperCase().padStart(4, '0');
+		}
+
+		function generateQRCode() {
+			const qrdata = generateQRData();
+			console.log(qrdata);
+
+			new QRCode(document.getElementById("qrcode"), {
+				text: qrdata,
+				colorDark: "#000000",
+				colorLight: "#ffffff",
+				correctLevel: QRCode.CorrectLevel.H,
+				useSVG: true
+			});
+
+			// Wait a bit for the QRCode library to generate the SVG
+			setTimeout(() => {
+				const svgElement = document.querySelector("#qrcode svg");
+				const serializer = new XMLSerializer();
+				const svgString = serializer.serializeToString(svgElement);
+				const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+				const url = URL.createObjectURL(svgBlob);
+
+				const imgElement = document.getElementById("qrimage");
+				imgElement.src = url;
+			}, 100); // Adjust the delay if necessary
+		}
+
+		$(document).ready(function() {
+			applyKeyMask(); // Apply mask on page load
+			$("#amount").inputmask("decimal", { digits: 2, autoGroup: true, groupSeparator: ',', radixPoint: '.' });
+		});
+	</script>
 </body>
 </html>
