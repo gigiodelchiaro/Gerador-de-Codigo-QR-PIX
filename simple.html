@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Código QR PIX</title>
+	<script type="text/javascript" src="dependencies/jquery.min.js"></script>
+	<script type="text/javascript" src="dependencies/qrcode.js"></script>
+	<link rel="stylesheet" href="style.css">
+</head>
+<body class="simple">
+	<input id="key" type="text" placeholder="Chave PIX">
+	<input id="amount" type="text" placeholder="Valor">
+	<input id="name" type="text" placeholder="Nome Beneficiário">
+	<input id="city" type="text" placeholder="Cidade">
+	<input id="identifier" type="text" placeholder="Identificador">
+	<div id="qrcode"></div>
+	<div id="qr-container">
+		<img id="qrimage">
+	</div>
+	<script type="text/javascript">
+
+		function padLength(length) {
+			return length.toString().padStart(2, '0');
+		}
+
+		function sanitizeText(text) {
+			const accentsMap = new Map([
+				["á", "a"], ["ã", "a"], ["â", "a"], ["à", "a"], ["ä", "a"],
+				["é", "e"], ["ê", "e"], ["è", "e"], ["ë", "e"],
+				["í", "i"], ["î", "i"], ["ì", "i"], ["ï", "i"],
+				["ó", "o"], ["õ", "o"], ["ô", "o"], ["ò", "o"], ["ö", "o"],
+				["ú", "u"], ["û", "u"], ["ù", "u"], ["ü", "u"],
+				["ç", "c"], ["ñ", "n"],
+				["Á", "A"], ["Ã", "A"], ["Â", "A"], ["À", "A"], ["Ä", "A"],
+				["É", "E"], ["Ê", "E"], ["È", "E"], ["Ë", "E"],
+				["Í", "I"], ["Î", "I"], ["Ì", "I"], ["Ϊ", "I"],
+				["Ó", "O"], ["Õ", "O"], ["Ô", "O"], ["Ò", "O"], ["Ö", "O"],
+				["Ú", "U"], ["Û", "U"], ["Ù", "U"], ["Ü", "U"],
+				["Ç", "C"], ["Ñ", "N"]
+			]);
+ 
+			return text.split('').map(char => accentsMap.get(char) || char).join('');
+		}
+
+		function generateQRData() {
+			const key = sanitizeText(document.getElementById("key").value);
+			const amount = document.getElementById("amount").value;
+			const name = sanitizeText(document.getElementById("name").value);
+			const city = sanitizeText(document.getElementById("city").value);
+			var identifier = sanitizeText(document.getElementById("identifier").value);
+
+			if (identifier === "") {
+				identifier = "***";
+			}
+			let amountString = "";
+			if (amount != "") {
+				const normalizedAmount = parseFloat(amount).toFixed(2);
+				amountString = "54" + padLength(normalizedAmount.length) + normalizedAmount;
+			}
+
+			let qrdata = "00020126" + padLength(key.length + 22) + "0014BR.GOV.BCB.PIX01" + padLength(key.length) + key + "520400005303986" + amountString + "5802BR59" + padLength(name.length) + name + "60" + padLength(city.length) + city + "62" + padLength(identifier.length + 4) + "05" + padLength(identifier.length) + identifier + "6304";
+			qrdata += crc16Ccitt(qrdata);
+
+			return qrdata;
+		}
+
+		function crc16Ccitt(data) {
+			const polynomial = 0x1021;
+			let crc = 0xFFFF;
+
+			for (let i = 0; i < data.length; i++) {
+				crc ^= data.charCodeAt(i) << 8;
+				for (let j = 0; j < 8; j++) {
+					if ((crc & 0x8000) !== 0) {
+						crc = (crc << 1) ^ polynomial;
+					} else {
+						crc <<= 1;
+					}
+					crc &= 0xFFFF;
+				}
+			}
+
+			return crc.toString(16).toUpperCase().padStart(4, '0');
+		}
+
+		function generateQRCode() {
+			const qrdata = generateQRData();
+			console.log(qrdata);
+
+			new QRCode(document.getElementById("qrcode"), {
+				text: qrdata,
+				colorDark: "#000000",
+				colorLight: "#ffffff",
+				correctLevel: QRCode.CorrectLevel.H,
+				useSVG: true
+			});
+
+			// Wait a bit for the QRCode library to generate the SVG
+			setTimeout(() => {
+				const svgElement = document.querySelector("#qrcode svg");
+				const serializer = new XMLSerializer();
+				const svgString = serializer.serializeToString(svgElement);
+				const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+				const url = URL.createObjectURL(svgBlob);
+
+				const imgElement = document.getElementById("qrimage");
+				imgElement.src = url;
+			}, 100); // Adjust the delay if necessary
+		}
+
+		function getUrlParameters() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const params = {};
+			for (const [key, value] of urlParams.entries()) {
+				params[key] = value;
+			}
+			return params;
+		}
+
+		function setInputValuesAndHide(params) {
+			Object.entries(params).forEach(element => {
+				const inputElement = document.getElementById(element[0]);
+				if (inputElement) {
+					inputElement.value = element[1];
+                    console.log(inputElement);
+                    console.log(element[1]);
+				}
+			});
+		}
+
+		$(document).ready(function() {
+			const params = getUrlParameters();
+			setInputValuesAndHide(params);
+            console.log(key.value);
+			console.log(amount.value);
+			console.log(name.value);
+			console.log(city.value);
+			console.log(identifier.value);
+            generateQRCode();
+		});
+    
+	</script>
+</body>
+</html>
