@@ -3,13 +3,14 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Gerador QR Code PIX</title>
+	<title>Gerador de Código QR PIX</title>
 	<script type="text/javascript" src="dependencies/jquery.min.js"></script>
 	<script type="text/javascript" src="dependencies/jquery.inputmask.min.js"></script>
 	<script type="text/javascript" src="dependencies/qrcode.js"></script>
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
+	<h1>Gerador de Código QR PIX</h1>
 	<select id="key-type" onchange="applyKeyMask()">
 		<option value="cpf">CPF</option>
 		<option value="cnpj">CNPJ</option>
@@ -62,7 +63,13 @@
 				["í", "i"], ["î", "i"], ["ì", "i"], ["ï", "i"],
 				["ó", "o"], ["õ", "o"], ["ô", "o"], ["ò", "o"], ["ö", "o"],
 				["ú", "u"], ["û", "u"], ["ù", "u"], ["ü", "u"],
-				["ç", "c"], ["ñ", "n"]
+				["ç", "c"], ["ñ", "n"],
+				["Á", "A"], ["Ã", "A"], ["Â", "A"], ["À", "A"], ["Ä", "A"],
+				["É", "E"], ["Ê", "E"], ["È", "E"], ["Ë", "E"],
+				["Í", "I"], ["Î", "I"], ["Ì", "I"], ["Ϊ", "I"],
+				["Ó", "O"], ["Õ", "O"], ["Ô", "O"], ["Ò", "O"], ["Ö", "O"],
+				["Ú", "U"], ["Û", "U"], ["Ù", "U"], ["Ü", "U"],
+				["Ç", "C"], ["Ñ", "N"]
 			]);
 
 			return text.split('').map(char => accentsMap.get(char) || char).join('');
@@ -142,7 +149,29 @@
 			}, 100); // Adjust the delay if necessary
 		}
 
+		function getUrlParameters() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const params = {};
+			for (const [key, value] of urlParams.entries()) {
+				params[key] = value;
+			}
+			return params;
+		}
+
+		function setInputValuesAndHide(params) {
+			Object.entries(params).forEach(element => {
+				const inputElement = document.getElementById(element[0]);
+				if (inputElement) {
+					inputElement.value = element[1];
+					inputElement.style.display = 'none'; // Hide the input element
+				}
+			});
+		}
+
 		$(document).ready(function() {
+			const params = getUrlParameters();
+			setInputValuesAndHide(params);
+
 			applyKeyMask(); // Apply mask on page load
 			$("#amount").inputmask("decimal", { digits: 2, autoGroup: true, groupSeparator: ',', radixPoint: '.' });
 		});
